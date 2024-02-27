@@ -20,7 +20,7 @@ Vnoise = 0; %RUÍDO NA MEDIDA DA SAÍDA
 
 %define os horizontes
 N = 4; %HORIZONTE DE PREDIÇÃO
-Nu = 1; %HORIZONTE DE CONTROLE
+Nu = N; %HORIZONTE DE CONTROLE
 %--------
 N1 = 2; %COMEÇO DO HORIZONTE DE PREDIÇÃO
 N2 = N+N1-1; %FIM DO HORIZONTE DE PREDIÇÃO 
@@ -89,3 +89,51 @@ vectors = [ 0   0   0;
             1   0   1;
             1   1   0;
             1   1   1];
+
+%Diofantina
+F1 = zeros(N2,dimB);
+E1 = zeros(1,N2);
+R_A = [1 zeros(1,dimA-1)] - A1;
+E1(1) = 1;
+F1(1,:) = R_A(2:end);
+for i=2:N2
+    E1(i) = F1(i-1,1);
+    F1(i,:) = [F1(i-1,2:end) zeros(1,dimA-dimB)] - F1(i-1,1)*A1(2:end);
+end
+
+F2 = zeros(N2,dimB);
+E2 = zeros(1,N2);
+R_A = [1 zeros(1,dimA-1)] - A2;
+E2(1) = 1;
+F2(1,:) = R_A(2:end);
+for i=2:N2
+    E2(i) = F2(i-1,1);
+    F2(i,:) = [F2(i-1,2:end) zeros(1,dimA-dimB)] - F2(i-1,1)*A2(2:end);
+end
+
+%Encontra resposta livre e forçada
+G1 = zeros(N2,Nu);
+G2 = zeros(N2,Nu);
+G3 = zeros(N2,Nu);
+G4 = zeros(N2,Nu);
+G5 = zeros(N2,Nu);
+G6 = zeros(N2,Nu);
+f_aux1 = zeros(N2,(dimA-1)+(3*(dimB-1)));
+f_aux2 = zeros(N2,(dimA-1)+(3*(dimB-1)));
+for i=1:N2
+    EB1 = conv(E1(1:i),B1);
+    EB2 = conv(E1(1:i),B2);
+    EB3 = conv(E1(1:i),B3);
+    G1(i,i:-1:1) = EB1(1:i);
+    G2(i,i:-1:1) = EB2(1:i);
+    G3(i,i:-1:1) = EB3(1:i);
+    f_aux1(i,:) = [F1(i,:) EB1(end-(dimB-2):end) EB2(end-(dimB-2):end) EB3(end-(dimB-2):end)];
+
+    EB4 = conv(E1(1:i),B4);
+    EB5 = conv(E1(1:i),B5);
+    EB6 = conv(E1(1:i),B6);
+    G4(i,i:-1:1) = EB4(1:i);
+    G5(i,i:-1:1) = EB5(1:i);
+    G6(i,i:-1:1) = EB6(1:i);
+    f_aux2(i,:) = [F2(i,:) EB4(end-(dimB-2):end) EB5(end-(dimB-2):end) EB6(end-(dimB-2):end)];
+end
